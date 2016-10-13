@@ -1,9 +1,10 @@
+#define _GNU_SOURCE
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
-
+#include <unistd.h>
 
 
 int sensor();
