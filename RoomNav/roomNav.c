@@ -1,12 +1,15 @@
 #include "roomNav.h"
-int startX;
-int startY;
-int posX;
-int posY;
-int **testArray;
+int startX;    //Randomized Start x,y points
+int startY;    // of robot
+
+int posX;      //Current x,y Position
+int posY;		// of robot
+
+int **testArray;   //2-D array of room to simulate sensor inputs
 int testArrayW;
 int testArrayH;
-char direction;
+
+char direction;    //Direction robot is facing
 
 
 void rotate(){
@@ -44,7 +47,7 @@ int sensor(){
 	
 }
 
-void Initi(){
+void Initi(){   //Initialize Linked List
 	headNode = (struct sensorNode *)malloc(sizeof(struct sensorNode));
 	tailNode = (struct sensorNode *)malloc(sizeof(struct sensorNode));
 	struct sensorNode *tempNode;  
@@ -55,7 +58,7 @@ void Initi(){
 
 }
 
-int sensorInput(char* filename){
+int sensorInput(char* filename){   //Simulate sensor input based on room array values
 	testArrayH = 1;
 
 	FILE *fp;
@@ -65,7 +68,7 @@ int sensorInput(char* filename){
 
 	size_t lineLen = 1;
 	getline(&buffer, &lineLen, fp); 
-	testArrayW = lineLen-2;
+	testArrayW = lineLen-3;
 
 	if(lineLen == -1){
 		printf("ERROR COULD NOT READ MAP\n");
@@ -129,20 +132,38 @@ void printGrid(){
 }
 
 int main(int argc, char **argv){
-	direction = 'n';
+	direction = 'n';     //Start off with robot facing "Up"
 	Initi();
-	sensorInput(argv[1]);
-	posX = startX;
+	sensorInput(argv[1]);  //Initizlise array to simulate sensor input
+	posX = startX;     //
 	posY = startY;
+	
+	int userIn = (argv[2])?atoi(argv[2]):0;   //Let user specifiy how many
+											  //time steps to run simulation for	
+											  //If no value specify, loop infinitely
+	
+	if(userIn > 0){
+		for(int i = 0; i < userIn; i++){ 
+			printf("Move: %i\n", userIn);
+			printGrid();
+			if(!sensor())
+				move();
+			else
+				rotate();
 
-	while(1){
-		printGrid();
-		if(!sensor())
-			move();
-		else
-			rotate();
+			sleep(1);
+		}
+	}
+	else{
+		while(1){
+			printGrid();
+			if(!sensor())
+				move();
+			else
+				rotate();
 
-		sleep(1);
+			sleep(1);
+		}
 	}
 }
 
