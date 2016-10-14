@@ -1,3 +1,5 @@
+//Josh Mack 10/12/`6
+
 #include "roomNav.h"
 int startX;    //Randomized Start x,y points
 int startY;    // of robot
