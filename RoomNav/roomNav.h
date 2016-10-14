@@ -13,10 +13,12 @@ void move();
 void rotate();
 int sensorInput(char*);
 void printGrid();
+int linkedList(char);
+int printNode();
 
 
 
-struct sensorNode
+typedef struct sensorNode
 {
 	int number;
 	struct sensorNode *top;
@@ -24,4 +26,4 @@ struct sensorNode
 	struct sensorNode *left;
 	struct sensorNode *right;
 
-} *headNode, *tailNode, *currNode, *tempNode;
+} sensorNode;
