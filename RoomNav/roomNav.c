@@ -7,6 +7,9 @@ int startY;    // of robot
 int posX;      //Current x,y Position
 int posY;		// of robot
 
+int currRow;
+int currCol;
+
 int **testArray;   //2-D array of room to simulate sensor inputs
 int testArrayW;
 int testArrayH;
@@ -43,7 +46,7 @@ void move(){
 		posX--;
 	
 	linkedList(direction);		
-	printArray[posY][posX] = mostRecentNode-1;
+	printArray[posY][posX] = mostRecentNode;
 
 }
 
@@ -63,7 +66,7 @@ void Initi(){   //Initialize Linked List
 	head = (struct sensorNode *)malloc(sizeof(sensorNode));
 	tail = (struct sensorNode **)malloc(sizeof(sensorNode*));
 	
-	head->number = mostRecentNode++;
+	head->number = mostRecentNode;
 	head->top = NULL;
 	head->bottom = NULL;
 	head->left = NULL;
@@ -128,6 +131,10 @@ int sensorInput(char* filename){   //Simulate sensor input based on room array v
 
 void printGrid(){
 	printf("\nPosition: (%i,%i)\n", posX, posY);
+	for(int x = 0; x < testArrayW; x++)
+		printf("%i ", x);
+	
+	printf("\n");
 	for(int y = 0; y < testArrayH; y++){
 		for(int x = 0; x < testArrayW; x++){
 			if(x == posX && y == posY){
@@ -152,38 +159,46 @@ int linkedList(char direction){
 	
 	if(direction == 'n'){
 		current->top = malloc(sizeof(sensorNode));
-		(current->top)->number = mostRecentNode++;
+		(current->top)->number = ++mostRecentNode;
 		(current->top)->top = NULL;
 		(current->top)->bottom = current;
 		(current->top)->left = NULL;
 		(current->top)->right = NULL;
+		(current->top)->row = ++currRow;
+		(current->top)->col = currCol;
 		(*tail) = (current->top);
 	}
 	else if(direction == 'e'){
 		current->right = malloc(sizeof(sensorNode));
-		(current->right)->number = mostRecentNode++;
+		(current->right)->number = ++mostRecentNode;
 		(current->right)->top = NULL;
 		(current->right)->bottom = NULL;
 		(current->right)->left = current;
 		(current->right)->right = NULL;
+		(current->right)->row = currRow;
+		(current->right)->col = ++currCol;
 		(*tail) = (current->right);
 	}
 	else if(direction == 's'){
 		current->bottom = malloc(sizeof(sensorNode));
-		(current->bottom)->number = mostRecentNode++;
+		(current->bottom)->number = ++mostRecentNode;
 		(current->bottom)->top = current;
 		(current->bottom)->bottom = NULL;
 		(current->bottom)->left = NULL;
 		(current->bottom)->right = NULL;
+		(current->bottom)->row = --currRow;
+		(current->bottom)->col = currCol;
 		(*tail) = (current->bottom);
 	}
 	else if(direction == 'w'){
 		current->left = malloc(sizeof(sensorNode));
-		(current->left)->number = mostRecentNode++;
+		(current->left)->number = ++mostRecentNode;
 		(current->left)->top = NULL;
 		(current->left)->bottom = NULL;
 		(current->left)->left = NULL;
 		(current->left)->right = current;
+		(current->left)->row = currRow;
+		(current->left)->col = --currCol;
 		(*tail) = (current->left);
 	}
 	
@@ -253,6 +268,98 @@ int printNode(){
 		printf("       x       \n\n");
 }
 
+int checkNode(){
+	sensorNode *current = (*tail);
+	int nodeNum = mostRecentNode;
+	int searchRow = currRow;
+	int searchCol = currCol;
+	if(direction == 'n')
+		searchRow++;
+	else if(direction == 'e')
+		searchCol++;
+	else if(direction == 's')
+		searchRow--;
+	else if(direction == 'w')
+		searchCol--;
+	
+	while(nodeNum >= 0){
+		
+		if((current->row == searchRow)&&(current->col == searchCol)){
+			if((direction == 'n')&&((*tail)->top != NULL)){
+				(*tail)->top = current;
+				current->bottom = (*tail);
+			}
+			if((direction == 'e')&&((*tail)->right != NULL)){
+				(*tail)->right = current;
+				current->left = (*tail);
+			}
+			if((direction == 's')&&((*tail)->bottom != NULL)){
+				(*tail)->bottom = current;
+				current->top = (*tail);
+			}
+			if((direction == 'w')&&((*tail)->left != NULL)){
+				(*tail)->left = current;
+				current->right = (*tail);
+			}				
+			return 1;
+		}
+		if((current->top != NULL) && ((current->top)->number == nodeNum-1))
+			current = current->top;
+		else if((current->left != NULL) && ((current->left)->number == nodeNum-1))
+			current = current->left;
+		else if((current->right != NULL) && ((current->right)->number == nodeNum-1))
+			current = current->right;
+		else if((current->bottom != NULL) && ((current->bottom)->number == nodeNum-1))
+			current = current->bottom;
+		
+		nodeNum--;		
+	}
+	
+	return 0;
+}
+/*
+int findNode(){
+	sensorNode *current = (*tail);
+	int nodeNum = mostRecentNode;
+	
+	while(nodeNum >= 0){
+		
+		if((current->row == searchRow)&&(current->col == searchCol)){
+			if((direction == 'n')&&((*tail)->top != NULL)){
+				(*tail)->top = current;
+				current->bottom = (*tail);
+			}
+			if((direction == 'e')&&((*tail)->right != NULL)){
+				(*tail)->right = current;
+				current->left = (*tail);
+			}
+			if((direction == 's')&&((*tail)->bottom != NULL)){
+				(*tail)->bottom = current;
+				current->top = (*tail);
+			}
+			if((direction == 'w')&&((*tail)->left != NULL)){
+				(*tail)->left = current;
+				current->right = (*tail);
+			}				
+			return 1;
+		}
+		if((current->top != NULL) && ((current->top)->number == nodeNum-1))
+			current = current->top;
+		else if((current->left != NULL) && ((current->left)->number == nodeNum-1))
+			current = current->left;
+		else if((current->right != NULL) && ((current->right)->number == nodeNum-1))
+			current = current->right;
+		else if((current->bottom != NULL) && ((current->bottom)->number == nodeNum-1))
+			current = current->bottom;
+		
+		nodeNum--;		
+	}
+	
+	return 0;
+}
+
+
+*/
 int main(int argc, char **argv){
 	direction = 'n';     //Start off with robot facing "Up"
 	Initi();
@@ -260,6 +367,8 @@ int main(int argc, char **argv){
 	posX = startX;     //
 	posY = startY;	
 	printArray[startY][startX] = -1;
+	
+	int spin = 4;
 
 
 #ifdef PRINTROOM
@@ -269,6 +378,7 @@ int main(int argc, char **argv){
 	if(userIn > 0){
 		for(int i = 0; i < userIn; i++){ 
 			printf("Move: %i\n", i);
+			printf("CheckNode: %i \n",checkNode());
 			printGrid();
 			#ifdef PRINTLL	
 				printNode();
@@ -277,11 +387,17 @@ int main(int argc, char **argv){
 				printLinkedList(2); //Print Left-to-Right
 				printLinkedList(3); //Print Left-to-Right
 			#endif
-			if(!sensor()){
+			if(!sensor()&!checkNode()){
 				move();
+				spin = 4;
+			}
+			else if(!spin){
+				printf("\nEND\n");//findNode();
+				break;
 			}
 			else{
 				rotate();
+				spin--;
 				printNode();
 			}
 		sleep(1);
@@ -289,21 +405,32 @@ int main(int argc, char **argv){
 	}
 	else{
 		while(1){
+			printf("_________________________________________________\n");
+			printf("Current Row, Col : (%i, %i)\n", currRow, currCol);
+			printf("MOST RECENT NODE: %i, (%i, %i)\n", mostRecentNode, (*tail)->row, (*tail)->col);
+			printf("Current NODE: %i\n",(*tail)->number);
+
 			printGrid();
 			#ifdef PRINTLL
 				printNode();
-				printLinkedList(0); //Print Left-to-Right
-				printLinkedList(1); //Print Left-to-Right
-				printLinkedList(2); //Print Left-to-Right
-				printLinkedList(3); //Print Left-to-Right
+				//printLinkedList(0); //Print Left-to-Right
+				//printLinkedList(1); //Print Left-to-Right
+				//printLinkedList(2); //Print Left-to-Right
+				//printLinkedList(3); //Print Left-to-Right
 			#endif
-			if(!sensor()){
+			if(!sensor()&!checkNode()){
 				move();
+				spin = 4;
 			}
-		else{
-			rotate();
-			printNode();
-		}
+			else if(!spin){
+				printf("\nEND\n");//findNode();
+				break;
+			}
+			else{
+				rotate();
+				spin--;
+				printNode();
+			}
 		sleep(1);
 		}
 	}

@@ -9,7 +9,7 @@ roomNav: roomNavBuild
 	./roomNav ./testRoom1.txt
 	
 roomNavBuild: roomNav.c Makefile
-	gcc -std=c99 -o roomNav roomNav.c -DPRINTLL=1 -DPRINTROOM=1
+	gcc -std=c99 -o roomNav roomNav.c -lm -DPRINTLL=1 -DPRINTROOM=1
 	
 	
 #RoomNavList will only show linkedList output

@@ -15,6 +15,8 @@ int sensorInput(char*);
 void printGrid();
 int linkedList(char);
 int printNode();
+int checkNode();
+int findNode();
 
 
 
@@ -25,5 +27,7 @@ typedef struct sensorNode
 	struct sensorNode *bottom;
 	struct sensorNode *left;
 	struct sensorNode *right;
+	int row;
+	int col;
 
 } sensorNode;
