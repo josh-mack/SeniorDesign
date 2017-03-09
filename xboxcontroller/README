@@ -1,0 +1,18 @@
+Xbox Controller Button Map
+
+
+Robot Control
+Right Trigger:   foward movement
+Left Trigger:    backWard movement
+left joystick:   left/right turning
+left d-pad:      left 90 degree turn(counterclockwise)
+right d-pad:     right 90 degree turn(clockwise)
+Y:               play theme song
+
+Servo Control
+X:               center servo position
+down d-pad:      low servo position
+up d-pad:        high servo position
+right bumper:    increment servo position up
+left bumper:     increment servo position down
+
