@@ -13,6 +13,7 @@ global roomList #2D array representing the room
 global currentNode #current node representing the robot
 global numNodes #Number of nodes currently in roomList
 global maxX, maxY #max coordinates of 2D array stored in roomList
+global turnCount
 
 arrowDir = {'North': "^", 'South': "v", 'East': ">", 'West': "<"}
 
@@ -26,12 +27,6 @@ class Node(object):   #Nodes represent grid blocks in the 2D array roomList
 		self.right = right
 		self.row = row
 		self.col = col
-		
-	def incrementRow(self):
-		self.row += 1
-		
-	def incrementCol(self):
-		self.col += 1
 
 def test():   #load textfile as test room
 	global roomFile
@@ -52,14 +47,31 @@ def sensor():  #Artificial Sensor for testing 1= obstacle detected, 0 = none
 	elif direction is "West":
 		return roomFile[globalY][globalX-1]
 	
-	
+def turn():
+	global direction
+
+	if direction is "North":
+		direction = "East"
+	elif direction is "East":
+		direction = "South"
+	elif direction is "South":
+		direction = "West"
+	elif direction is "West":
+		direction = "North"
+
 def move():	    #Move depending on the current direction the robot is facing
 				#This will also adjust the roomList array's boundries as needed
+	
+	print("len(roomList)", len(roomList))
+	print("len(roomList[0])", len(roomList[0]))
+	print("maxY", maxY)
+	print("maxX", maxX)
 	global globalX, globalY, posX, posY, currentNode, roomList, direction, numNodes, maxX, maxY
 	if direction is "North":
 		globalY-=1
 		posY-=1
 		if(posY == -1):
+			maxY+=1
 			posY+=1
 			roomList.insert(0, [])
 			for col in range(len(roomList[1])):
@@ -71,17 +83,18 @@ def move():	    #Move depending on the current direction the robot is facing
 		currentNode.top = roomList[posY][posX]
 		currentNode = roomList[posY][posX]
 		numNodes+=1
-	
+		
 	
 	elif direction is "West":
 		globalX-=1
 		posX-=1
 		if(posX == -1):
 			posX+=1
+			maxX+=1
 			for row in range(len(roomList)):
 				roomList[row].insert(0, Node(-1, None, None, None, None, 0, row))
-				for col in range(len(roomList[0])-1):
-					roomList[row][col+1].col += 1
+				for col in range(len(roomList[0])):
+					roomList[row][col].col += 1
 				
 		
 		roomList[posY][posX].nodeNum = numNodes+1
@@ -93,32 +106,51 @@ def move():	    #Move depending on the current direction the robot is facing
 	
 	elif direction is "South":
 		globalY+=1
-		if(posY+1 > maxY):
-			roomList.append([])
-			for col in range(len(roomList[maxY])):
-				roomList[maxY+1].append(Node(-1, None, None, None, None, col, maxY+1))
-		
-		roomList[posY+1][posX].nodeNum = numNodes+1
-		roomList[posY+1][posX].top = currentNode
-		currentNode.bottom = roomList[posY+1][posX]
-		currentNode = roomList[posY+1][posX]
-		maxY+=1
-		numNodes+=1
 		posY+=1
+
+		if(posY >= maxY):
+			maxY+=1
+			roomList.append([])
+			for col in range(len(roomList[0])):
+				roomList[maxY].append(Node(-1, None, None, None, None, col, maxY))
+		
+		roomList[posY][posX].nodeNum = numNodes+1
+		roomList[posY][posX].top = currentNode
+		currentNode.bottom = roomList[posY][posX]
+		currentNode = roomList[posY][posX]
+		numNodes+=1
 	
 	elif direction is "East":
 		globalX+=1
-		if(posX+1 > maxX):
-			for row in range(len(roomList)):
-				roomList[row].append(Node(-1, None, None, None, None, maxX+1, row))
-						
-		roomList[posY][posX+1].nodeNum = numNodes+1
-		roomList[posY][posX+1].left = currentNode
-		currentNode.right = roomList[posY][posX+1]
-		currentNode = roomList[posY][posX+1]
-		numNodes+=1
-		maxX+=1
 		posX+=1
+		
+		if(posX >= maxX):
+			maxX+=1
+			for row in range(len(roomList)):
+				roomList[row].append(Node(-1, None, None, None, None, maxX, row))
+						
+		roomList[posY][posX].nodeNum = numNodes+1
+		roomList[posY][posX].left = currentNode
+		currentNode.right = roomList[posY][posX]
+		currentNode = roomList[posY][posX]
+		numNodes+=1
+		
+	
+def checkMove():
+	global turnCount
+	
+	if(sensor()) is 0:
+		turnCount = 0
+		move()
+	else:
+		turn()
+		turnCount+=1
+		checkMove()
+		
+	if(turnCount > 3):
+		exit()
+
+	
 	
 	
 def printRoom():
@@ -149,9 +181,13 @@ def printList():  #Print contents of roomList
 		print()
 	print('~'*20)
 	
+	
+	
+	
 def init():    #Initialize variables and create staring node. Default direction is "North"
-	global globalX, globalY, direction, roomList, currentNode, posX, posY, numNodes, maxX, maxY
-	globalX = globalY = 1
+	global globalX, globalY, direction, roomList, currentNode, posX, posY, numNodes, maxX, maxY, turnCount
+	globalX = globalY = 4
+	turnCount = 0
 	posX = posY = 0
 	maxX = maxY = 0
 	direction = "North"
@@ -168,7 +204,10 @@ def main():
 	test()
 	printRoom()
 	printList()
-	move()
 	
-	
+	while(1):
+		checkMove()
+		printRoom()
+		printList()
+		time.sleep(1)
 main()
