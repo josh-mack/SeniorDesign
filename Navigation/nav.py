@@ -14,7 +14,7 @@ global currentNode #current node representing the robot
 global numNodes #Number of nodes currently in roomList
 global maxX, maxY #max coordinates of 2D array stored in roomList
 global turnCount
-
+global stop
 arrowDir = {'North': "^", 'South': "v", 'East': ">", 'West': "<"}
 
 class Node(object):   #Nodes represent grid blocks in the 2D array roomList
@@ -27,6 +27,7 @@ class Node(object):   #Nodes represent grid blocks in the 2D array roomList
 		self.right = right
 		self.row = row
 		self.col = col
+			
 
 def test():   #load textfile as test room
 	global roomFile
@@ -62,10 +63,6 @@ def turn():
 def move():	    #Move depending on the current direction the robot is facing
 				#This will also adjust the roomList array's boundries as needed
 	
-	print("len(roomList)", len(roomList))
-	print("len(roomList[0])", len(roomList[0]))
-	print("maxY", maxY)
-	print("maxX", maxX)
 	global globalX, globalY, posX, posY, currentNode, roomList, direction, numNodes, maxX, maxY
 	if direction is "North":
 		globalY-=1
@@ -92,7 +89,7 @@ def move():	    #Move depending on the current direction the robot is facing
 			posX+=1
 			maxX+=1
 			for row in range(len(roomList)):
-				roomList[row].insert(0, Node(-1, None, None, None, None, 0, row))
+				roomList[row].insert(0, Node(-1, None, None, None, None, -1, row))
 				for col in range(len(roomList[0])):
 					roomList[row][col].col += 1
 				
@@ -108,7 +105,7 @@ def move():	    #Move depending on the current direction the robot is facing
 		globalY+=1
 		posY+=1
 
-		if(posY >= maxY):
+		if(posY > maxY):
 			maxY+=1
 			roomList.append([])
 			for col in range(len(roomList[0])):
@@ -124,7 +121,7 @@ def move():	    #Move depending on the current direction the robot is facing
 		globalX+=1
 		posX+=1
 		
-		if(posX >= maxX):
+		if(posX > maxX):
 			maxX+=1
 			for row in range(len(roomList)):
 				roomList[row].append(Node(-1, None, None, None, None, maxX, row))
@@ -134,21 +131,122 @@ def move():	    #Move depending on the current direction the robot is facing
 		currentNode.right = roomList[posY][posX]
 		currentNode = roomList[posY][posX]
 		numNodes+=1
+
+
+def checkVisited():
+
+	if direction is "North":
+		try:
+			if(posY is 0):
+				return True
+				
+			elif (roomList[posY-1][posX].nodeNum == -1):
+				return True
+		except IndexError:
+			print("ERROR")
+			return True
+		
+	elif direction is "East":
+		try:
+			if (roomList[posY][posX+1].nodeNum == -1):
+				return True 
+		except IndexError:
+			return True
+	
+	elif direction is "South":
+		try:
+			if (roomList[posY+1][posX].nodeNum == -1):
+				return True 
+		except IndexError:
+			return True	
+	
+	elif direction is "West":
+		try:
+			if(posX is 0):
+				return True
+				
+			elif (roomList[posY][posX-1].nodeNum == -1):
+				return True 
+		except IndexError:
+			return True
+		
+	return False
+	
+	
+	
+def findNext():
+	global roomList
+	try:
+		for i in range(len(roomList)):
+			for j in range(len(roomList[i])):
+				if(roomList[i][j].nodeNum >= 0):
+					if(roomList[i-1][j].nodeNum == -1 and i != 0):
+						return roomList[i][j].nodeNum, j, i, "North"
+					elif(roomList[i][j+1].nodeNum == -1):
+						return roomList[i][j].nodeNum, j, i, "East"
+					elif(roomList[i+1][j].nodeNum == -1): 
+						return roomList[i][j].nodeNum, j, i, "South"
+					elif(roomList[i][j-1].nodeNum == -1 and j!= 0):
+						return roomList[i][j].nodeNum, j, i, "West"
+	except IndexError:
+		print("ERRR")
+	return -1, -1, -1, -1
+
+def moveTo(targetNode, targetX, targetY):
+	global posX, posY, currentNode, roomList, globalX, globalY, stop
+	if(targetNode is -1):
+		print("All possible nodes visited")
+		stop = 1
+	else:
+		#NOT SURE HOW YET
+		diffX = posX-targetX
+		diffY = posY-targetY
+		
+		globalX = globalX - diffX
+		globalY = globalY - diffY
+		posX = targetX
+		posY = targetY
+		currentNode = roomList[targetY][targetX]
 		
 	
-def checkMove():
-	global turnCount
+def markObstacle():
+	global direction, roomList, posX, posY
+	try:
+		if direction is "North" and roomList[posY-1][posX].nodeNum == -1:
+			roomList[posY-1][posX].nodeNum = -2
+		elif direction is "East" and roomList[posY][posX+1].nodeNum == -1:
+			roomList[posY][posX+1].nodeNum = -2
+		elif direction is "South" and roomList[posY+1][posX].nodeNum == -1:
+			roomList[posY+1][posX].nodeNum = -2
+		elif direction is "West" and roomList[posY][posX-1].nodeNum == -1:
+			roomList[posY][posX-1].nodeNum = -2
 	
-	if(sensor()) is 0:
+	except IndexError:
+		print()
+		
+		
+		
+def checkMove():
+	global turnCount, direction
+	
+	if(sensor() is 0 and checkVisited()):
 		turnCount = 0
 		move()
+		
+	elif(turnCount > 3):
+		newNode, x, y, direction = findNext()
+		print("MOVING TO NODE", newNode, "at X:", x, "Y:", y, " Direction: ", direction)
+		print("roomList:", roomList[y-1][x].nodeNum)
+		moveTo(newNode, x, y)
+		turnCount = 0
+		
 	else:
+		markObstacle()
 		turn()
 		turnCount+=1
 		checkMove()
 		
-	if(turnCount > 3):
-		exit()
+	
 
 	
 	
@@ -168,11 +266,11 @@ def printList():  #Print contents of roomList
 
 	global roomList, currentNode
 	print('~'*20)
-	print("Current Node", currentNode.nodeNum,":", currentNode.col, ",", currentNode.row,)
+	print("Current Node", currentNode.nodeNum,":(", currentNode.col, ",", currentNode.row,")")
 	
 	for i in range(len(roomList)):
 		for j in range(len(roomList[i])):
-			if (i is globalY) and (j is globalX):
+			if (i is posY) and (j is posX):
 				print(arrowDir[direction], end=' ')
 			elif(roomList[i][j].nodeNum is -1):
 				print('*', end=' ')
@@ -185,7 +283,7 @@ def printList():  #Print contents of roomList
 	
 	
 def init():    #Initialize variables and create staring node. Default direction is "North"
-	global globalX, globalY, direction, roomList, currentNode, posX, posY, numNodes, maxX, maxY, turnCount
+	global globalX, globalY, direction, roomList, currentNode, posX, posY, numNodes, maxX, maxY, turnCount, stop
 	globalX = globalY = 4
 	turnCount = 0
 	posX = posY = 0
@@ -195,19 +293,22 @@ def init():    #Initialize variables and create staring node. Default direction 
 	currentNode = Node(0, None, None, None, None, posX, posY)
 	roomList[0].append(currentNode)
 	numNodes = 0
-	
+	stop = 0
 	
 	
 def main():
-	global direction
+	global direction, stop, roomList
 	init()
 	test()
 	printRoom()
 	printList()
-	
-	while(1):
+	while(stop != 1):
 		checkMove()
-		printRoom()
-		printList()
-		time.sleep(1)
+		#printList()
+		time.sleep(0.5)  #Time Delay for Viewing
+		
+	direction = "North"
+	printList()
+	
+	
 main()
