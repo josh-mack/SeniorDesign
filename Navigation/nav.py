@@ -302,13 +302,14 @@ def main():
 	test()
 	printRoom()
 	printList()
-	while(stop != 1):
-		checkMove()
-		#printList()
-		time.sleep(0.5)  #Time Delay for Viewing
-		
-	direction = "North"
-	printList()
+	try:
+		while(stop != 1):
+			checkMove()
+			printList()
+			time.sleep(0.5)  #Time Delay for Viewing
+	except KeyError:
+		direction = "North"
+	#printList()
 	
 	
 main()

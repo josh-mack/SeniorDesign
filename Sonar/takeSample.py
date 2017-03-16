@@ -31,6 +31,7 @@ def takeSamples(TRIG,ECHO):
         GPIO.output(TRIG, True)
         time.sleep(0.00001)
         GPIO.output(TRIG, False)
+	pulse_start = time.time()	
 
         while GPIO.input(ECHO)==0:
             pulse_start = time.time()

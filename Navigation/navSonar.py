@@ -298,8 +298,8 @@ def printList():  #Print contents of roomList
 def init():    #Initialize variables and create staring node. Default direction is "North"
 	global globalX, globalY, direction, roomList, currentNode, posX, posY, \
 	numNodes, maxX, maxY, turnCount, stop, TRIG, ECHO
-	TRIG = 23
-	ECHO = 24
+	TRIG = 24
+	ECHO = 23
 	globalX = globalY = 4
 	turnCount = 0
 	posX = posY = 0
@@ -319,10 +319,10 @@ def main():
 	printRoom()
 	printList()
 	while(stop != 1):
-		time.sleep(0.25)
+		time.sleep(0.5)
 		checkMove()
 		printList()
-		time.sleep(0.25)  #Time Delay for Viewing
+		time.sleep(0.5)  #Time Delay for Viewing
 		
 	direction = "North"
 	printList()
