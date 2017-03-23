@@ -53,19 +53,19 @@ for event in xbox_read.event_stream(deadzone=12000):
                         r=create.Create('/dev/ttyUSB0')
                         createOn=1
 	#Foward Movement
-        if event.key=='RT':
+        if event.key=='RT' and createOn==1:
                 print (event.value)
                 r.go(speedCnst*(event.value),0)
                 speed=(speedCnst*(event.value))
                 print ("speed:", speed)
 	#Reverse Movement
-        if event.key=='LT':
+        if event.key=='LT' and createOn==1:
                 print (event.value)
                 r.go(-speedCnst*(event.value),0)
                 speed=(-speedCnst*(event.value))
                 print ("speed:", speed)
         #Turning Control      
-        if event.key=='X1':
+        if event.key=='X1' and createOn==1:
                 if event.value>7000:
                         r.go(speed,(-event.value)*turnCnst)
                 elif event.value<-7000:
@@ -73,12 +73,12 @@ for event in xbox_read.event_stream(deadzone=12000):
                 else:
                         r.go(speed,0)
         #Play Zelda Theme Song        
-        if event.key=='Y':
+        if event.key=='Y' and createOn==1:
                 if event.value==1:
                         play()
                 print (event.value)
         #90 degree turn left(counterclockwise)      
-        if event.key=='dl':
+        if event.key=='dl' and createOn==1:
                 if event.value==1:
                         print (event.value)
                         r.go(0,75)
@@ -87,7 +87,7 @@ for event in xbox_read.event_stream(deadzone=12000):
                 if event.value==0:
                         print (event.value)
         #90 degree turn right(clockwise)              
-        if event.key=='dr':
+        if event.key=='dr' and createOn==1:
                 if event.value==1:
                         print (event.value)
                         r.go(0,-75)
@@ -96,7 +96,7 @@ for event in xbox_read.event_stream(deadzone=12000):
                 if event.value==0:
                         print(event.value)
           
-        if event.key=='A':
+        if event.key=='A' and createOn==1:
                 if event.value==1:
                         print (event.value)
                         r.go(50)
@@ -104,21 +104,21 @@ for event in xbox_read.event_stream(deadzone=12000):
                         print (event.value)
                         r.stop()
                           
-        if event.key=='B':
+        if event.key=='B' and createOn==1:
                 print (event.value)
                 r.stop()
                   
-        if event.key=='guide':
+        if event.key=='guide' and createOn==1:
                 if event.value==1 and (time.time()-time0)<3.0:
                         print ("guide:1")
                         print("time:",time.time()-time0)
                         print("Entering Race Mode...")
                         speedCnst=2
                         turnCnst=.1
-        if event.value==0:
+        if event.value==0 and createOn==1:
                 time0=time.time()
                 print("time:",time0)
-        if event.key=='back':
+        if event.key=='back' and createOn==1:
                 if event.value==1 and (time.time()-time0)<3.0:
                         print ("back:1")
                         print("time:",time.time()-time0)
@@ -131,34 +131,34 @@ for event in xbox_read.event_stream(deadzone=12000):
 
                         #Servo Code
 
-        if event.key=='Y2':
+        if event.key=='Y2' and createOn==1:
                 if event.value>7000:
                         changeAngle(2,0.5)
                         print ("Servo Go Upy")
                 if event.value<-7000:
                         changeAngle(2, -0.5)
                         print ("Servo Go Downy")
-        if event.key=='RB':
+        if event.key=='RB' and createOn==1:
                 if event.value==1:
                         changeAngle(2,0.5)
                         print ("Servo Go Upy")
-        if event.key=='LB':
+        if event.key=='LB' and createOn==1:
                 if event.value==1:
                         changeAngle(2,-0.5)
                         print ("Servo Go Downy")
         #Position Servo to Center
-        if event.key=='X':
+        if event.key=='X' and createOn==1:
                 if event.value==1:
                         changeAngle(2, 9.7, vin=1)
                         #changeAngle(2,0.5)
                         print("Centering Servo")
         #Position Servo to High 
-        if event.key=='du':
+        if event.key=='du' and createOn==1:
                 if event.value==1:
                         changeAngle(2, 22, vin=1)
                         print("High Position")
         #Position Servo to Low
-        if event.key=='dd':
+        if event.key=='dd' and createOn==1:
                 if event.value==1:
                         changeAngle(2, 2.5, vin=1)
                         print("Low Position")

@@ -4,7 +4,7 @@ import statistics as stat
 
 
 def takeSamples(TRIG,ECHO):
-
+    GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
     """
     given the pins for Trig and Echo, takeSamples returns the distance from the
@@ -36,7 +36,7 @@ def takeSamples(TRIG,ECHO):
 
         while GPIO.input(ECHO)==0:
             pulse_start = time.time()
-
+        pulse_end = time.time()
         while GPIO.input(ECHO)==1:
             pulse_end = time.time()     
 

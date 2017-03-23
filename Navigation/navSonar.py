@@ -1,12 +1,11 @@
 '''Project: Envirobot for Senior Design at University of Delaware
 Navigation Code
 by Josh Mack 3/8/2017'''
-
 import random
 import time
 import takeSample as ts
-global TRIG
-global ECHO
+global TRIG, TRIG_L, TRIG_R
+global ECHO, ECHO_L, ECHO_R
 
 global roomFile  #Text file containing layout of test room
 global direction  #Current Direction Robot is Facing
@@ -54,12 +53,16 @@ def sensor():  #Artificial Sensor for testing 1= obstacle detected, 0 = none
 def sensor():
 	global TRIG, ECHO
 	distance = ts.takeSamples(TRIG,ECHO)
-	print("Distance:",distance,"cm")
-	if(distance < 10):
-		return 1
-	else:
-		return 0
+	print("Front Distance:",distance,"cm")
+	return 1 if(distance < 10) else 0
 
+def sensorSides():
+	global TRIG_R, ECHO_R, TRIG_L, ECHO_L
+	left = ts.takeSamples(TRIG_L, ECHO_L)
+	right = ts.takeSamples(TRIG_R,ECHO_R)
+	print("Left  Distance: ", left, "cm\nRight Distance: ", right, "cm")
+	return (1 if (left < 10) else 0, 1 if (right < 10) else 0)
+	
 	
 def turn():
 	global direction
@@ -73,6 +76,89 @@ def turn():
 	elif direction is "West":
 		direction = "North"
 
+		
+def bumpMaxX():
+	global maxX, roomList
+	maxX+=1
+	for row in range(len(roomList)):
+		roomList[row].append(Node(-1, None, None, None, None, maxX, row))
+
+		
+def bumpMaxY():
+	global maxY, roomList
+	maxY+=1
+	roomList.append([])
+	for col in range(len(roomList[0])):
+		roomList[maxY].append(Node(-1, None, None, None, None, col, maxY))
+
+
+def bumpMinX():
+	global maxX, roomList, posX
+	maxX+=1
+	posX+=1
+	for row in range(len(roomList)):
+		roomList[row].insert(0, Node(-1, None, None, None, None, -1, row))
+		for col in range(len(roomList[0])):
+			roomList[row][col].col += 1
+
+
+def bumpMinY():
+	global maxY, roomList, posY
+	maxY+=1
+	posY+=1
+	roomList.insert(0, [])
+	for col in range(len(roomList[1])):
+		roomList[1][col].row = 1
+		roomList[0].append(Node(-1, None, None, None, None, col, 0))
+
+
+def checkSides():
+	global TRIG_R, ECHO_R, maxX, maxY, posX, posY, direction, roomList
+	rightDist =  ts.takeSamples(TRIG_R,ECHO_R)
+	leftDist = 0
+	print("Right Distance: ", rightDist, "cm")
+	print("Left Distance: ", leftDist, "cm")
+	if (direction is "North") or (direction is "South"):
+		if(posX+1 > maxX):
+			bumpMaxX()
+				
+		if(posX == 0):
+			bumpMinX()
+			
+		if (leftDist<20):
+			if direction is "North":
+				markObstacle("West")
+			else:
+				markObstacle("East")
+
+		if (rightDist<20):
+			if direction is "North":
+				markObstacle("East")
+			else:
+				markObstacle("West")
+			
+			
+	if (direction is "East") or (direction is "West"):
+		if(posY+1 > maxY):
+			bumpMaxY()
+				
+		if(posY == 0):
+			bumpMinY()
+			
+		if (leftDist<20):
+			if direction is "East":
+				markObstacle("North")
+			else:
+				markObstacle("South")
+
+		if (rightDist<20):
+			if direction is "East":
+				markObstacle("South")
+			else:
+				markObstacle("north")
+	
+
+		
 def move():	    #Move depending on the current direction the robot is facing
 				#This will also adjust the roomList array's boundries as needed
 	
@@ -81,12 +167,7 @@ def move():	    #Move depending on the current direction the robot is facing
 		globalY-=1
 		posY-=1
 		if(posY == -1):
-			maxY+=1
-			posY+=1
-			roomList.insert(0, [])
-			for col in range(len(roomList[1])):
-				roomList[1][col].row = 1
-				roomList[0].append(Node(-1, None, None, None, None, col, 0))
+			bumpMinY()
 		
 		roomList[posY][posX].nodeNum = numNodes+1
 		roomList[posY][posX].bottom = currentNode
@@ -99,12 +180,7 @@ def move():	    #Move depending on the current direction the robot is facing
 		globalX-=1
 		posX-=1
 		if(posX == -1):
-			posX+=1
-			maxX+=1
-			for row in range(len(roomList)):
-				roomList[row].insert(0, Node(-1, None, None, None, None, -1, row))
-				for col in range(len(roomList[0])):
-					roomList[row][col].col += 1
+			bumpMinX()
 				
 		
 		roomList[posY][posX].nodeNum = numNodes+1
@@ -119,10 +195,7 @@ def move():	    #Move depending on the current direction the robot is facing
 		posY+=1
 
 		if(posY > maxY):
-			maxY+=1
-			roomList.append([])
-			for col in range(len(roomList[0])):
-				roomList[maxY].append(Node(-1, None, None, None, None, col, maxY))
+			bumpMaxY()
 		
 		roomList[posY][posX].nodeNum = numNodes+1
 		roomList[posY][posX].top = currentNode
@@ -135,9 +208,7 @@ def move():	    #Move depending on the current direction the robot is facing
 		posX+=1
 		
 		if(posX > maxX):
-			maxX+=1
-			for row in range(len(roomList)):
-				roomList[row].append(Node(-1, None, None, None, None, maxX, row))
+			bumpMaxX()
 						
 		roomList[posY][posX].nodeNum = numNodes+1
 		roomList[posY][posX].left = currentNode
@@ -222,8 +293,8 @@ def moveTo(targetNode, targetX, targetY):
 		currentNode = roomList[targetY][targetX]
 		
 	
-def markObstacle():
-	global direction, roomList, posX, posY
+def markObstacle(direction):
+	global roomList, posX, posY
 	try:
 		if direction is "North" and roomList[posY-1][posX].nodeNum == -1:
 			roomList[posY-1][posX].nodeNum = -2
@@ -235,7 +306,7 @@ def markObstacle():
 			roomList[posY][posX-1].nodeNum = -2
 	
 	except IndexError:
-		print()
+		print(end='')
 		
 		
 		
@@ -254,8 +325,9 @@ def checkMove():
 		turnCount = 0
 		
 	else:
-		markObstacle()
+		markObstacle(direction)
 		turn()
+		checkSides()
 		turnCount+=1
 		checkMove()
 		
@@ -287,6 +359,8 @@ def printList():  #Print contents of roomList
 				print(arrowDir[direction], end=' ')
 			elif(roomList[i][j].nodeNum is -1):
 				print('*', end=' ')
+			elif(roomList[i][j].nodeNum is -2):
+				print('#', end=' ')
 			else:
 				print(roomList[i][j].nodeNum, end=' ')
 		print()
@@ -297,9 +371,13 @@ def printList():  #Print contents of roomList
 	
 def init():    #Initialize variables and create staring node. Default direction is "North"
 	global globalX, globalY, direction, roomList, currentNode, posX, posY, \
-	numNodes, maxX, maxY, turnCount, stop, TRIG, ECHO
+	numNodes, maxX, maxY, turnCount, stop, TRIG, ECHO, TRIG_R, ECHO_R
 	TRIG = 24
 	ECHO = 23
+	TRIG_R = 27
+	ECHO_R = 17
+#TRIG_L = 
+#TRIG_R = 
 	globalX = globalY = 4
 	turnCount = 0
 	posX = posY = 0
@@ -318,9 +396,12 @@ def main():
 	test()
 	printRoom()
 	printList()
+	checkSides()
+
 	while(stop != 1):
 		time.sleep(0.5)
 		checkMove()
+		checkSides()
 		printList()
 		time.sleep(0.5)  #Time Delay for Viewing
 		
