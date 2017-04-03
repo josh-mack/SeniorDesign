@@ -3,10 +3,18 @@ Navigation Code
 by Josh Mack 3/8/2017'''
 import random
 import time
+import create
+import math
 import takeSample as ts
+import signal
+import sys
+
+
+
+global robot, turnAngle, moveDist
 global TRIG, TRIG_L, TRIG_R
 global ECHO, ECHO_L, ECHO_R
-
+global threshold_Front, threshold_R, threshold_L
 global roomFile  #Text file containing layout of test room
 global direction  #Current Direction Robot is Facing
 global globalX, globalY  #Global coordinate of robot in roomFile
@@ -17,7 +25,18 @@ global numNodes #Number of nodes currently in roomList
 global maxX, maxY #max coordinates of 2D array stored in roomList
 global turnCount
 global stop
+global hallwayWidth, seperationWidth
+
+
 arrowDir = {'North': "^", 'South': "v", 'East': ">", 'West': "<"}
+
+def signal_handler(signal, frame):
+	global robot
+	robot.stop()
+	print("Exiting...")
+	
+	sys.exit(0)
+
 
 class Node(object):   #Nodes represent grid blocks in the 2D array roomList
   
@@ -50,23 +69,24 @@ def sensor():  #Artificial Sensor for testing 1= obstacle detected, 0 = none
 	elif direction is "West":
 		return roomFile[globalY][globalX-1]
 '''
+
+
+
+
+
 def sensor():
-	global TRIG, ECHO
+	global TRIG, ECHO, threshold_Front
 	distance = ts.takeSamples(TRIG,ECHO)
 	print("Front Distance:",distance,"cm")
-	return 1 if(distance < 10) else 0
+	return 1 if(distance < threshold_Front) else 0
 
-def sensorSides():
-	global TRIG_R, ECHO_R, TRIG_L, ECHO_L
-	left = ts.takeSamples(TRIG_L, ECHO_L)
-	right = ts.takeSamples(TRIG_R,ECHO_R)
-	print("Left  Distance: ", left, "cm\nRight Distance: ", right, "cm")
-	return (1 if (left < 10) else 0, 1 if (right < 10) else 0)
-	
-	
 def turn():
-	global direction
-
+	global direction, robot
+	robot.go(0, -75)
+	robot.waitAngle(turnAngle)
+	robot.stop()
+	
+	
 	if direction is "North":
 		direction = "East"
 	elif direction is "East":
@@ -113,9 +133,19 @@ def bumpMinY():
 
 
 def checkSides():
-	global TRIG_R, ECHO_R, maxX, maxY, posX, posY, direction, roomList
+	global TRIG_R, ECHO_R, TRIG_L, ECHO_L, maxX, maxY, posX, posY, direction, roomList, \
+	threshold_L, threshold_R, hallwayWidth, seperationWidth, rightDist, leftDist
+	
+	
 	rightDist =  ts.takeSamples(TRIG_R,ECHO_R)
-	leftDist = 0
+	print("GOT HERE")
+
+	leftDist = ts.takeSamples(TRIG_L,ECHO_L)
+	
+	hallwayWidth = leftDist+rightDist+seperationWidth
+	
+
+	
 	print("Right Distance: ", rightDist, "cm")
 	print("Left Distance: ", leftDist, "cm")
 	if (direction is "North") or (direction is "South"):
@@ -125,13 +155,13 @@ def checkSides():
 		if(posX == 0):
 			bumpMinX()
 			
-		if (leftDist<20):
+		if (leftDist<threshold_L):
 			if direction is "North":
 				markObstacle("West")
 			else:
 				markObstacle("East")
 
-		if (rightDist<20):
+		if (rightDist<threshold_R):
 			if direction is "North":
 				markObstacle("East")
 			else:
@@ -145,13 +175,13 @@ def checkSides():
 		if(posY == 0):
 			bumpMinY()
 			
-		if (leftDist<20):
+		if (leftDist<threshold_L):
 			if direction is "East":
 				markObstacle("North")
 			else:
 				markObstacle("South")
 
-		if (rightDist<20):
+		if (rightDist<threshold_R):
 			if direction is "East":
 				markObstacle("South")
 			else:
@@ -162,7 +192,12 @@ def checkSides():
 def move():	    #Move depending on the current direction the robot is facing
 				#This will also adjust the roomList array's boundries as needed
 	
-	global globalX, globalY, posX, posY, currentNode, roomList, direction, numNodes, maxX, maxY
+	global globalX, globalY, posX, posY, currentNode, roomList, direction, numNodes, maxX, maxY, robot, moveDist
+	
+	robot.go(50, 0)
+	robot.waitDistance(moveDist/2)
+	robot.stop()
+	
 	if direction is "North":
 		globalY-=1
 		posY-=1
@@ -292,22 +327,89 @@ def moveTo(targetNode, targetX, targetY):
 		posY = targetY
 		currentNode = roomList[targetY][targetX]
 		
+def calibrate():
+	global ECHO_L, ECHO_R, TRIG_L, TRIG_R, hallwayWidth, seperationWidth, robot, rightDist, leftDist, moveDist
+	rightDist2 =  ts.takeSamples(TRIG_R,ECHO_R)
+	leftDist2 =  ts.takeSamples(TRIG_L,ECHO_L)
+	print("Right:", rightDist, "Left", leftDist)
+	print("Right2:", rightDist2, "Left2", leftDist2)
+
+    #         110           107               83             107
+	if((leftDist2 > (rightDist2 + 2)) and (rightDist2 < rightDist)):
+		value = 2*(rightDist - rightDist2)/moveDist
+		print("RIGHT SIDE VALUE IS", value)
+	
+		theta = math.degrees(math.asin(2*(rightDist - rightDist2)/moveDist))
+		robot.go(0, 25)
+		robot.waitAngle(theta)
+		robot.stop()
+		
+		robot.go(50, 0)
+		robot.waitDistance(moveDist/2)
+		robot.stop()
+	
+		
+		
+		robot.go(0, -25)
+		robot.waitAngle(-theta)
+		robot.stop()
+		
+	elif((rightDist2 > (leftDist2 + 2)) and (leftDist2 < leftDist)):
+		value = 2*(rightDist - rightDist2)/moveDist
+		print("LEFT SIDE VALUE IS", value)
+	
+	
+		theta = math.degrees(math.asin(2*(leftDist - leftDist2)/moveDist))
+		robot.go(0, -25)
+		robot.waitAngle(-theta)
+		robot.stop()
+	
+		robot.go(50, 0)
+		robot.waitDistance(moveDist/2)
+		robot.stop()
+		
+		robot.go(0, 25)
+		robot.waitAngle(theta)
+		robot.stop()
+		
+	else:
+		print("IN ELSE")
+	
+		
+	
+	
+	
+	
+	
+	
+	
+
 	
 def markObstacle(direction):
-	global roomList, posX, posY
-	try:
-		if direction is "North" and roomList[posY-1][posX].nodeNum == -1:
-			roomList[posY-1][posX].nodeNum = -2
-		elif direction is "East" and roomList[posY][posX+1].nodeNum == -1:
-			roomList[posY][posX+1].nodeNum = -2
-		elif direction is "South" and roomList[posY+1][posX].nodeNum == -1:
-			roomList[posY+1][posX].nodeNum = -2
-		elif direction is "West" and roomList[posY][posX-1].nodeNum == -1:
-			roomList[posY][posX-1].nodeNum = -2
+	global roomList, posX, posY, maxX, maxY
 	
-	except IndexError:
-		print(end='')
-		
+	if(posX+1 > maxX):
+		bumpMaxX()
+				
+	if(posX == 0):
+		bumpMinX()
+	
+	if(posY+1 > maxY):
+		bumpMaxY()
+				
+	if(posY == 0):
+		bumpMinY()
+			
+			
+	if direction is "North" and roomList[posY-1][posX].nodeNum == -1:
+		roomList[posY-1][posX].nodeNum = -2
+	elif direction is "East" and roomList[posY][posX+1].nodeNum == -1:
+		roomList[posY][posX+1].nodeNum = -2
+	elif direction is "South" and roomList[posY+1][posX].nodeNum == -1:
+		roomList[posY+1][posX].nodeNum = -2
+	elif direction is "West" and roomList[posY][posX-1].nodeNum == -1:
+		roomList[posY][posX-1].nodeNum = -2
+
 		
 		
 def checkMove():
@@ -358,7 +460,7 @@ def printList():  #Print contents of roomList
 			if (i is posY) and (j is posX):
 				print(arrowDir[direction], end=' ')
 			elif(roomList[i][j].nodeNum is -1):
-				print('*', end=' ')
+				print('-', end=' ')
 			elif(roomList[i][j].nodeNum is -2):
 				print('#', end=' ')
 			else:
@@ -371,13 +473,29 @@ def printList():  #Print contents of roomList
 	
 def init():    #Initialize variables and create staring node. Default direction is "North"
 	global globalX, globalY, direction, roomList, currentNode, posX, posY, \
-	numNodes, maxX, maxY, turnCount, stop, TRIG, ECHO, TRIG_R, ECHO_R
-	TRIG = 24
-	ECHO = 23
-	TRIG_R = 27
-	ECHO_R = 17
-#TRIG_L = 
-#TRIG_R = 
+	numNodes, maxX, maxY, turnCount, stop, TRIG, ECHO, TRIG_R, ECHO_R, TRIG_L, ECHO_L, \
+	threshold_Front, threshold_R, threshold_L, robot, turnAngle, moveDist, seperationWidth, hallwayWidth
+
+	
+	robot = create.Create('/dev/ttyUSB0')
+	turnAngle = -90
+	moveDist = 100
+	
+	#GPIO Mapping for Front, Left and Right sonar sensors
+	TRIG = 23
+	ECHO = 27
+	TRIG_R = 23
+	ECHO_R = 22
+	TRIG_L = 23
+	ECHO_L = 17
+	
+	#Sensitivity Threshold for Obstacle distance in cm
+	threshold_Front = 20
+	threshold_L = 20
+	threshold_R = 20
+	hallwayWidth = 72
+	seperationWidth = 32
+	
 	globalX = globalY = 4
 	turnCount = 0
 	posX = posY = 0
@@ -390,19 +508,39 @@ def init():    #Initialize variables and create staring node. Default direction 
 	stop = 0
 	
 	
+	
 def main():
 	global direction, stop, roomList
+	global robot
 	init()
-	test()
-	printRoom()
+	signal.signal(signal.SIGINT, signal_handler)
+	
+	'''
+	robot.go(-25, 0)
+	robot.waitDistance(-100)
+	robot.stop()
+	time.sleep(0.5)
+	#test()
+	
+	
+	
+	checkSides()
+	robot.go(10)
+	robot.waitDistance(10)
+	robot.stop()
+	calibrate()
+	'''
+	#printRoom()
 	printList()
 	checkSides()
 
 	while(stop != 1):
 		time.sleep(0.5)
+
 		checkMove()
 		checkSides()
 		printList()
+		calibrate()
 		time.sleep(0.5)  #Time Delay for Viewing
 		
 	direction = "North"
@@ -410,3 +548,4 @@ def main():
 	
 	
 main()
+
