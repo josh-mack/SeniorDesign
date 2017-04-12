@@ -58,8 +58,7 @@ def takeSamples(TRIG,ECHO):
 
     distance = stat.median(sampleArray)
     #print to line
-    #print( "Distance:",distance,"cm")
+    print("Distance:",distance,"cm")
     GPIO.cleanup() #cleanup
     return distance
 
-    

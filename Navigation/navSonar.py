@@ -138,7 +138,6 @@ def checkSides():
 	
 	
 	rightDist =  ts.takeSamples(TRIG_R,ECHO_R)
-	print("GOT HERE")
 
 	leftDist = ts.takeSamples(TRIG_L,ECHO_L)
 	
@@ -329,41 +328,51 @@ def moveTo(targetNode, targetX, targetY):
 		
 def calibrate():
 	global ECHO_L, ECHO_R, TRIG_L, TRIG_R, hallwayWidth, seperationWidth, robot, rightDist, leftDist, moveDist
-	rightDist2 =  ts.takeSamples(TRIG_R,ECHO_R)
-	leftDist2 =  ts.takeSamples(TRIG_L,ECHO_L)
-	print("Right:", rightDist, "Left", leftDist)
-	print("Right2:", rightDist2, "Left2", leftDist2)
+	
+	print("Left", leftDist, "Right:", rightDist)
 
-    #         110           107               83             107
-	if((leftDist2 > (rightDist2 + 2)) and (rightDist2 < rightDist)):
-		value = 2*(rightDist - rightDist2)/moveDist
-		print("RIGHT SIDE VALUE IS", value)
+  
+	if((leftDist > 1500) or (rightDist > 1000)):   #   Greater than 1500 being considered
+		print("RETURNING LEFT OR RIGHT DIST > 1000 cm")
+		return									 #      infinite for these purposes
 	
-		theta = math.degrees(math.asin(2*(rightDist - rightDist2)/moveDist))
+	rightDist2 =  ts.takeSamples(TRIG_R,ECHO_R)
+	leftDist2 = ts.takeSamples(TRIG_L,ECHO_L)
+	print("LEFT2 is ", leftDist2, "RIGHT2 is ", rightDist2)
+	
+	if((leftDist2 > 1500) or (rightDist2 > 1000)):
+		print("RETURNING LEFT2 OR RIGHT2 DIST > 1000 cm")
+		return
+	
+	
+	if((rightDist2 < rightDist) and (rightDist2 < (rightDist+leftDist)/2)):
+		theta = math.degrees(math.asin((rightDist - rightDist2)/(moveDist/2)))
+		print("Right Angle is ", theta)
+		if(theta > 90):
+			print("RETURNING, RIGHT ANGLE OVER 90")
+			return
 		robot.go(0, 25)
-		robot.waitAngle(theta)
+		robot.waitAngle(2*theta)
 		robot.stop()
 		
 		robot.go(50, 0)
 		robot.waitDistance(moveDist/2)
 		robot.stop()
-	
-		
 		
 		robot.go(0, -25)
 		robot.waitAngle(-theta)
 		robot.stop()
-		
-	elif((rightDist2 > (leftDist2 + 2)) and (leftDist2 < leftDist)):
-		value = 2*(rightDist - rightDist2)/moveDist
-		print("LEFT SIDE VALUE IS", value)
 	
-	
-		theta = math.degrees(math.asin(2*(leftDist - leftDist2)/moveDist))
+	elif((leftDist2 < leftDist) and (leftDist2 < (rightDist+leftDist)/2)):
+		theta = math.degrees(math.asin((leftDist - leftDist2)/(moveDist/2)))
+		if(theta > 90):
+			print("RETURNING LEFT ANGLE OVER 90")
+			return
+		print("Left Angle is ", theta)
 		robot.go(0, -25)
-		robot.waitAngle(-theta)
+		robot.waitAngle(-2*theta)
 		robot.stop()
-	
+		
 		robot.go(50, 0)
 		robot.waitDistance(moveDist/2)
 		robot.stop()
@@ -371,11 +380,6 @@ def calibrate():
 		robot.go(0, 25)
 		robot.waitAngle(theta)
 		robot.stop()
-		
-	else:
-		print("IN ELSE")
-	
-		
 	
 	
 	
@@ -483,17 +487,17 @@ def init():    #Initialize variables and create staring node. Default direction 
 	
 	#GPIO Mapping for Front, Left and Right sonar sensors
 	TRIG = 23
-	ECHO = 27
-	TRIG_R = 23
-	ECHO_R = 22
-	TRIG_L = 23
-	ECHO_L = 17
+	ECHO = 25
+	TRIG_R = 4
+	ECHO_R = 21
+	ECHO_L = 12
+	TRIG_L = 24
 	
 	#Sensitivity Threshold for Obstacle distance in cm
-	threshold_Front = 20
-	threshold_L = 20
-	threshold_R = 20
-	hallwayWidth = 72
+	threshold_Front = 120
+	threshold_L = 120
+	threshold_R = 120
+	hallwayWidth = 250
 	seperationWidth = 32
 	
 	globalX = globalY = 4
@@ -508,6 +512,103 @@ def init():    #Initialize variables and create staring node. Default direction 
 	stop = 0
 	
 	
+def angleTest():
+	global TRIG_L, TRIG_R, ECHO_L, ECHO_R, robot, moveDist
+	rightDist =  ts.takeSamples(TRIG_R,ECHO_R)
+	leftDist = ts.takeSamples(TRIG_L,ECHO_L)
+	print("LEFT is ", leftDist, "RIGHT is ", rightDist)
+		
+	if((leftDist > 1500) or (rightDist > 1500)):   #   Greater than 1500 being considered
+		print("RETURNING LEFT OR RIGHT DIST > 1500 cm")
+		return									 #      infinite for these purposes
+	
+	robot.go(25, 0)
+	robot.waitDistance(100)
+	robot.stop()
+	
+	rightDist2 =  ts.takeSamples(TRIG_R,ECHO_R)
+	leftDist2 = ts.takeSamples(TRIG_L,ECHO_L)
+	print("LEFT2 is ", leftDist2, "RIGHT2 is ", rightDist2)
+	
+	if((leftDist2 > 1500) or (rightDist2 > 1500)):
+		print("RETURNING LEFT2 OR RIGHT2 DIST > 1500 cm")
+		return
+	
+	
+	if((rightDist2 < rightDist) and (rightDist2 < (rightDist+leftDist)/2)):
+		theta = math.degrees(math.asin((rightDist - rightDist2)/moveDist))
+		print("Right Angle is ", theta)
+		if(theta > 90):
+			print("RETURNING, RIGHT ANGLE OVER 90")
+			return
+		robot.go(0, 25)
+		robot.waitAngle(2*theta)
+		robot.stop()
+		
+		robot.go(25, 0)
+		robot.waitDistance(100)
+		robot.stop()
+		
+		robot.go(0, -25)
+		robot.waitAngle(-theta)
+		robot.stop()
+	
+	elif((leftDist2 < leftDist) and (leftDist2 < (rightDist+leftDist)/2)):
+		theta = math.degrees(math.asin((leftDist - leftDist2)/moveDist))
+		if(theta > 90):
+			print("RETURNING LEFT ANGLE OVER 90")
+			return
+		print("Left Angle is ", theta)
+		robot.go(0, -25)
+		robot.waitAngle(-2*theta)
+		robot.stop()
+		
+		robot.go(25, 0)
+		robot.waitDistance(100)
+		robot.stop()
+		
+		robot.go(0, 25)
+		robot.waitAngle(theta)
+		robot.stop()
+
+	
+def centerTest():
+	global TRIG_L, TRIG_R, ECHO_L, ECHO_R, robot, moveDist
+	rightDist =  ts.takeSamples(TRIG_R,ECHO_R)
+	leftDist = ts.takeSamples(TRIG_L,ECHO_L)
+	print("TESTING CENTERING PROCESS")
+	print("LEFT is ", leftDist, "RIGHT is ", rightDist)
+	if((leftDist > 1500) or (rightDist > 1500)):   #   Greater than 1500 being considered infinite
+		print("RETURNING LEFT OR RIGHT DIST > 1500 cm")
+		return	
+	
+	if(rightDist < (rightDist+leftDist)/2):
+		robot.go(0, 25)
+		robot.waitAngle(90)
+		robot.stop()
+		
+		robot.go(25)
+		robot.waitDistance(((rightDist+leftDist)/2)-rightDist)
+		robot.stop()
+		
+		robot.go(0, -25)
+		robot.waitAngle(-90)
+		robot.stop()
+	
+	elif(leftDist < (rightDist+leftDist)/2):
+		robot.go(0, -25)
+		robot.waitAngle(-90)
+		robot.stop()
+		
+		robot.go(25)
+		robot.waitDistance(((rightDist+leftDist)/2)-leftDist)
+		robot.stop()
+		
+		robot.go(0, 25)
+		robot.waitAngle(90)
+		robot.stop()
+		
+	
 	
 def main():
 	global direction, stop, roomList
@@ -515,30 +616,25 @@ def main():
 	init()
 	signal.signal(signal.SIGINT, signal_handler)
 	
+	'''	
+#TESTING FOR THE CENTERING FUNCTIONS CENTER and ANGLE
+	while(1):
+		angleTest()
+		time.sleep(0.25)
+		centerTest()
+		time.sleep(0.25)
+
 	'''
-	robot.go(-25, 0)
-	robot.waitDistance(-100)
-	robot.stop()
-	time.sleep(0.5)
-	#test()
 	
 	
-	
-	checkSides()
-	robot.go(10)
-	robot.waitDistance(10)
-	robot.stop()
-	calibrate()
-	'''
-	#printRoom()
 	printList()
 	checkSides()
 
 	while(stop != 1):
 		time.sleep(0.5)
 
-		checkMove()
 		checkSides()
+		checkMove()
 		printList()
 		calibrate()
 		time.sleep(0.5)  #Time Delay for Viewing

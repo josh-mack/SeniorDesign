@@ -4,6 +4,7 @@ import time
 from zelda import play
 import RPi.GPIO as GPIO
 
+
 #Inititalize Servo Setup
 panPin = 12                     #pan motion for pi-cam
 tiltPin = 16                    #tilt motion for pi-cam
