@@ -11,6 +11,9 @@ import sys
 
 
 
+
+
+global battery, dockPercent
 global robot, turnAngle, moveDist
 global TRIG, TRIG_L, TRIG_R
 global ECHO, ECHO_L, ECHO_R
@@ -33,6 +36,7 @@ arrowDir = {'North': "^", 'South': "v", 'East': ">", 'West': "<"}
 def signal_handler(signal, frame):
 	global robot
 	robot.stop()
+	robot.toSafeMode()
 	print("Exiting...")
 	
 	sys.exit(0)
@@ -475,41 +479,7 @@ def printList():  #Print contents of roomList
 	
 	
 	
-def init():    #Initialize variables and create staring node. Default direction is "North"
-	global globalX, globalY, direction, roomList, currentNode, posX, posY, \
-	numNodes, maxX, maxY, turnCount, stop, TRIG, ECHO, TRIG_R, ECHO_R, TRIG_L, ECHO_L, \
-	threshold_Front, threshold_R, threshold_L, robot, turnAngle, moveDist, seperationWidth, hallwayWidth
 
-	
-	robot = create.Create('/dev/ttyUSB0')
-	turnAngle = -90
-	moveDist = 100
-	
-	#GPIO Mapping for Front, Left and Right sonar sensors
-	TRIG = 23
-	ECHO = 25
-	TRIG_R = 4
-	ECHO_R = 21
-	ECHO_L = 12
-	TRIG_L = 24
-	
-	#Sensitivity Threshold for Obstacle distance in cm
-	threshold_Front = 120
-	threshold_L = 120
-	threshold_R = 120
-	hallwayWidth = 250
-	seperationWidth = 32
-	
-	globalX = globalY = 4
-	turnCount = 0
-	posX = posY = 0
-	maxX = maxY = 0
-	direction = "North"
-	roomList = [[]]
-	currentNode = Node(0, None, None, None, None, posX, posY)
-	roomList[0].append(currentNode)
-	numNodes = 0
-	stop = 0
 	
 	
 def angleTest():
@@ -571,7 +541,30 @@ def angleTest():
 		robot.waitAngle(theta)
 		robot.stop()
 
+def checkCharge():
+	global robot, battery, dockPercent
+	charge = robot.getSensor('BATTERY_CHARGE')
+	if(charge > 2800):
+		return
+	capacity = robot.getSensor('BATTERY_CAPACITY')
+	battery = charge/capacity*100//1
+	print("BATTERY:", battery, "%")
 	
+	if((battery) <= dockPercent ):
+		print("Battery Below", dockPercent, "% \nFINDING DOCK")
+		robot.toSafeMode()
+		robot.seekDock()
+		
+		while(battery < 50):
+			charge = robot.getSensor('BATTERY_CHARGE')
+			capacity = robot.getSensor('BATTERY_CAPACITY')
+			battery = charge/capacity*100//1
+			time.sleep(60)
+			print("BATTERY:", battery, "%")
+		
+		
+	return 0
+		
 def centerTest():
 	global TRIG_L, TRIG_R, ECHO_L, ECHO_R, robot, moveDist
 	rightDist =  ts.takeSamples(TRIG_R,ECHO_R)
@@ -609,23 +602,53 @@ def centerTest():
 		robot.stop()
 		
 	
+def init():    #Initialize variables and create staring node. Default direction is "North"
+	global globalX, globalY, direction, roomList, currentNode, posX, posY, \
+	numNodes, maxX, maxY, turnCount, stop, TRIG, ECHO, TRIG_R, ECHO_R, TRIG_L, ECHO_L, \
+	threshold_Front, threshold_R, threshold_L, robot, turnAngle, moveDist, seperationWidth, hallwayWidth, \
+	dockPercent, battery
+
+	
+	robot = create.Create('/dev/ttyUSB0')
+	turnAngle = -90
+	moveDist = 100
+	
+	#GPIO Mapping for Front, Left and Right sonar sensors
+	TRIG = 23
+	ECHO = 25
+	TRIG_R = 4
+	ECHO_R = 21
+	ECHO_L = 12
+	TRIG_L = 24
+	
+	#Sensitivity Threshold for Obstacle distance in cm
+	threshold_Front = 120
+	threshold_L = 120
+	threshold_R = 120
+	hallwayWidth = 250
+	seperationWidth = 32
+	
+	globalX = globalY = 4
+	turnCount = 0
+	posX = posY = 0
+	maxX = maxY = 0
+	direction = "North"
+	roomList = [[]]
+	currentNode = Node(0, None, None, None, None, posX, posY)
+	roomList[0].append(currentNode)
+	numNodes = 0
+	stop = 0
+	
+	dockPercent = 20
+	battery = 100
+	waitVal = checkCharge()
+	
 	
 def main():
 	global direction, stop, roomList
 	global robot
 	init()
 	signal.signal(signal.SIGINT, signal_handler)
-	
-	'''	
-#TESTING FOR THE CENTERING FUNCTIONS CENTER and ANGLE
-	while(1):
-		angleTest()
-		time.sleep(0.25)
-		centerTest()
-		time.sleep(0.25)
-
-	'''
-	
 	
 	printList()
 	checkSides()
@@ -642,6 +665,4 @@ def main():
 	direction = "North"
 	printList()
 	
-	
 main()
-
