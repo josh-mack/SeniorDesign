@@ -14,7 +14,7 @@ def takeSamples(TRIG,ECHO):
     """
 
     #how many samples?
-    samples = 10;
+    samples = 5;
     #sampleArray
     sampleArray = []
     

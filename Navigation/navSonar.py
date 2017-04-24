@@ -75,7 +75,7 @@ def sensor():  #Artificial Sensor for testing 1= obstacle detected, 0 = none
 '''
 
 
-
+ 
 
 
 def sensor():
@@ -197,8 +197,17 @@ def move():	    #Move depending on the current direction the robot is facing
 	
 	global globalX, globalY, posX, posY, currentNode, roomList, direction, numNodes, maxX, maxY, robot, moveDist
 	
+	
+	robot.go(18,0)
+	robot.waitDistance(moveDist/16)
+	robot.go(25,0)
+	robot.waitDistance(moveDist/16)
 	robot.go(50, 0)
-	robot.waitDistance(moveDist/2)
+	robot.waitDistance(moveDist/4)
+	robot.go(25,0)
+	robot.waitDistance(moveDist/16)
+	robot.go(10,0)
+	robot.waitDistance(moveDist/16)
 	robot.stop()
 	
 	if direction is "North":
@@ -359,8 +368,16 @@ def calibrate():
 		robot.waitAngle(2*theta)
 		robot.stop()
 		
+		robot.go(18,0)
+		robot.waitDistance(moveDist/16)
+		robot.go(25,0)
+		robot.waitDistance(moveDist/16)
 		robot.go(50, 0)
-		robot.waitDistance(moveDist/2)
+		robot.waitDistance(moveDist/4)
+		robot.go(25,0)
+		robot.waitDistance(moveDist/16)
+		robot.go(10,0)
+		robot.waitDistance(moveDist/16)
 		robot.stop()
 		
 		robot.go(0, -25)
@@ -377,8 +394,16 @@ def calibrate():
 		robot.waitAngle(-2*theta)
 		robot.stop()
 		
+		robot.go(18,0)
+		robot.waitDistance(moveDist/16)
+		robot.go(25,0)
+		robot.waitDistance(moveDist/16)
 		robot.go(50, 0)
-		robot.waitDistance(moveDist/2)
+		robot.waitDistance(moveDist/4)
+		robot.go(25,0)
+		robot.waitDistance(moveDist/16)
+		robot.go(10,0)
+		robot.waitDistance(moveDist/16)
 		robot.stop()
 		
 		robot.go(0, 25)
@@ -492,8 +517,16 @@ def angleTest():
 		print("RETURNING LEFT OR RIGHT DIST > 1500 cm")
 		return									 #      infinite for these purposes
 	
-	robot.go(25, 0)
-	robot.waitDistance(100)
+	robot.go(18,0)
+	robot.waitDistance(moveDist/8)
+	robot.go(25,0)
+	robot.waitDistance(moveDist/8)
+	robot.go(50, 0)
+	robot.waitDistance(moveDist/2)
+	robot.go(25,0)
+	robot.waitDistance(moveDist/8)
+	robot.go(10,0)
+	robot.waitDistance(moveDist/8)
 	robot.stop()
 	
 	rightDist2 =  ts.takeSamples(TRIG_R,ECHO_R)
@@ -515,8 +548,16 @@ def angleTest():
 		robot.waitAngle(2*theta)
 		robot.stop()
 		
-		robot.go(25, 0)
-		robot.waitDistance(100)
+		robot.go(18,0)
+		robot.waitDistance(moveDist/8)
+		robot.go(25,0)
+		robot.waitDistance(moveDist/8)
+		robot.go(50, 0)
+		robot.waitDistance(moveDist/2)
+		robot.go(25,0)
+		robot.waitDistance(moveDist/8)
+		robot.go(10,0)
+		robot.waitDistance(moveDist/8)
 		robot.stop()
 		
 		robot.go(0, -25)
@@ -533,8 +574,16 @@ def angleTest():
 		robot.waitAngle(-2*theta)
 		robot.stop()
 		
-		robot.go(25, 0)
-		robot.waitDistance(100)
+		robot.go(18,0)
+		robot.waitDistance(moveDist/8)
+		robot.go(25,0)
+		robot.waitDistance(moveDist/8)
+		robot.go(50, 0)
+		robot.waitDistance(moveDist/2)
+		robot.go(25,0)
+		robot.waitDistance(moveDist/8)
+		robot.go(10,0)
+		robot.waitDistance(moveDist/8)
 		robot.stop()
 		
 		robot.go(0, 25)
@@ -638,12 +687,30 @@ def init():    #Initialize variables and create staring node. Default direction 
 	roomList[0].append(currentNode)
 	numNodes = 0
 	stop = 0
-	
+
 	dockPercent = 20
 	
 	battery = 100
 	waitVal = checkCharge()
 	
+	
+def startJingle():
+	global robot
+	robot.playSong([(58,8)])
+	time.sleep(0.15)
+	robot.playSong([(60,8)])
+	time.sleep(0.15)
+	robot.playSong([(62,8)])
+	time.sleep(0.15)
+	robot.playSong([(58,8)])
+	
+	
+def IR():
+	global robot
+	while(1):
+		IR_Signal = robot.getSensor('IR_BYTE')
+		print("IR Value is",  IR_Signal)
+		time.sleep(0.5)
 	
 def main():
 	global direction, stop, roomList
@@ -651,19 +718,22 @@ def main():
 	init()
 	signal.signal(signal.SIGINT, signal_handler)
 	
+	startJingle()
+	
 	printList()
 	checkSides()
 
 	while(stop != 1):
-		time.sleep(0.5)
+		#time.sleep(0.5)
 
 		checkSides()
 		checkMove()
 		printList()
 		calibrate()
-		time.sleep(0.5)  #Time Delay for Viewing
+		#time.sleep(0.5)  #Time Delay for Viewing
 		
 	direction = "North"
 	printList()
 	
 main()
+

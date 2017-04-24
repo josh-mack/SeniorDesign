@@ -49,6 +49,12 @@ turnCnst=.01                    #divisor to convert analog input to usable turn 
 time0=0                         #variable to hold current time
 navOn=0                         #variable to hold state value of navSonar
 
+robot = create.Create('/dev/ttyUSB0')
+robot.playSong([(58,8)])
+time.sleep(0.15)
+robot.playSong([(60,8)])
+
+
 for event in xbox_read.event_stream(deadzone=12000):
 	#Initialize Robot
         if event.key=='start':
