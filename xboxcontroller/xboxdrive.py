@@ -1,3 +1,5 @@
+import sys
+import subprocess
 import xbox_read
 import create
 import time
@@ -45,6 +47,7 @@ speed=0                         #define translational speed variable
 speedCnst=.3                    #divisor to convert analog input to usable speed variable
 turnCnst=.01                    #divisor to convert analog input to usable turn variable
 time0=0                         #variable to hold current time
+navOn=0                         #variable to hold state value of navSonar
 
 for event in xbox_read.event_stream(deadzone=12000):
 	#Initialize Robot
@@ -106,8 +109,14 @@ for event in xbox_read.event_stream(deadzone=12000):
                         r.stop()
                           
         if event.key=='B' and createOn==1:
-                print (event.value)
-                r.stop()
+                if event.value==1:
+                        if navOn==0:
+                                navOn=1
+                                p=subprocess.Popen(['python3', '/home/pi/SeniorDesign/Navigation/navSonar.py'])
+                        else:
+                                navOn=0
+                                p.terminate()
+
                   
         if event.key=='guide' and createOn==1:
                 if event.value==1 and (time.time()-time0)<3.0:

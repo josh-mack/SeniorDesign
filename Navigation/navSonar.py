@@ -640,6 +640,7 @@ def init():    #Initialize variables and create staring node. Default direction 
 	stop = 0
 	
 	dockPercent = 20
+	
 	battery = 100
 	waitVal = checkCharge()
 	
