@@ -222,4 +222,3 @@ for event in xbox_read.event_stream(deadzone=12000):
 			f.write(motionVal + '\n' + speedVal + '\n' + turnVal + '\n' + str(time2 - time1) + '\n')
 		time1 = time2
 
- 

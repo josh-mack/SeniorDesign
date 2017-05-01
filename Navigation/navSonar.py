@@ -144,7 +144,7 @@ def checkSides():
 	rightDist =  ts.takeSamples(TRIG_R,ECHO_R)
 
 	leftDist = ts.takeSamples(TRIG_L,ECHO_L)
-	
+	time.sleep(0.5)
 	hallwayWidth = leftDist+rightDist+seperationWidth
 	
 
@@ -672,8 +672,8 @@ def init():    #Initialize variables and create staring node. Default direction 
 	
 	#Sensitivity Threshold for Obstacle distance in cm
 	threshold_Front = 120
-	threshold_L = 120
-	threshold_R = 120
+	threshold_L = 150
+	threshold_R = 150
 	hallwayWidth = 250
 	seperationWidth = 32
 	
@@ -707,10 +707,39 @@ def startJingle():
 	
 def IR():
 	global robot
-	while(1):
-		IR_Signal = robot.getSensor('IR_BYTE')
-		print("IR Value is",  IR_Signal)
-		time.sleep(0.5)
+	IR_Signal = [255]*10
+	#while(1): 
+	for x in range(10):
+		try:
+			IR_Signal[x] = robot.getSensor('IR_BYTE')%255
+			
+		except TypeError:
+			IR_Signal[x] = 0
+			
+			
+		print(IR_Signal[x])
+		robot.go(0,35)
+		robot.waitAngle(36)
+		robot.stop()
+		time.sleep(2)
+		
+	max_IR = max(IR_Signal)
+	max_index = IR_Signal.index(max_IR)
+	time.sleep(5)
+
+	print("Max Value is ", max_IR, "IR Signal ", max_index)
+
+	if(max_IR > 0):
+		robot.go(0, 50)
+		angle = max_index*36
+		robot.waitAngle(angle)
+		robot.stop()
+		
+		robot.go(15, 0)
+		robot.waitDistance(20)
+		robot.stop()
+		print("FACING CHARGER?")
+		time.sleep(2)
 	
 def main():
 	global direction, stop, roomList
@@ -736,4 +765,6 @@ def main():
 	printList()
 	
 main()
-
+#robot = create.Create('/dev/ttyUSB0')
+#for i in range(5):
+#	IR()
