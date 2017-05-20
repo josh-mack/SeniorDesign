@@ -1,0 +1,3 @@
+/home/user/Logger1/src/CMakeFiles/edit_cache.dir
+/home/user/Logger1/src/CMakeFiles/rebuild_cache.dir
+/home/user/Logger1/src/CMakeFiles/Logger.dir
