@@ -1,6 +1,7 @@
 # SeniorDesign
 
 Code for Envirobot, a University of Delaware Senior Design Project 2016-2017
+
 Team Members: Josh Mack, Sarah Jensen, Allan Pinera, Matt Campagnola and Christian Basse
 
 In depth project information can be found on the project website at https://sites.google.com/a/udel.edu/envirobot/
